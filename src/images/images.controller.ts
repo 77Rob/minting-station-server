@@ -28,51 +28,46 @@ export class ImagesController {
   @UseInterceptors(FilesInterceptor("file"))
   async create(@UploadedFiles() files, @Headers() headers) {
     const userId = headers.userid;
-    console.log(headers, userId);
-    console.time("Function #1");
-
     if (!this.images[userId]) {
       this.images[userId] = [];
     }
-    const newImagesMetadata = [];
-    for (const file of files) {
-      const signedUrl = await this.storageService.saveMedia(
-        `/${userId}/images/${file.originalname}`,
-        file.mimetype,
-        file.buffer,
-        []
-      );
+    console.time("Function #1");
 
-      const imageData = {
-        userId: userId,
-        fileName: file.originalname,
-        url: signedUrl,
-        name: file.originalname.split(".")[0],
-        attributes: [],
-      };
-      console.log(imageData);
-      newImagesMetadata.push(imageData);
-      const signedUrlImageData = await this.storageService.saveJSON(
-        `/${userId}/images/${file.originalname}.json`,
-        imageData
-      );
+    const newImagesData = await Promise.all(
+      files.map(async (file) => {
+        const signedUrl = await this.storageService.saveMedia(
+          `/${userId}/image/images/${file.originalname}`,
+          file.mimetype,
+          file.buffer,
+          []
+        );
+        const imageData = {
+          userId: userId,
+          fileName: file.originalname,
+          url: signedUrl,
+          name: file.originalname.split(".")[0],
+          attributes: [],
+        };
 
-      this.images[userId].push(signedUrlImageData);
-    }
+        const signedUrlImageData = await this.storageService.saveJSON(
+          `/${userId}/image/json/${file.originalname}.json`,
+          imageData
+        );
 
-    console.log(newImagesMetadata);
+        this.images[userId].push(signedUrlImageData);
+        return imageData;
+      })
+    );
     console.timeEnd("Function #1");
-    return JSON.stringify(newImagesMetadata);
-  }
-  // 6.9s
-  @Get()
-  findAll() {
-    return this.imagesService.findAll();
+
+    return JSON.stringify(newImagesData);
   }
 
-  @Get(":id")
-  findOne(@Param("id") id: string) {
-    return this.imagesService.findOne(+id);
+  @Get(":userId")
+  async findAllUserMetadata(@Param("userId") userId: string) {
+    const path = `/${userId}/image/json`;
+
+    return await this.storageService.getAllFilesFromPath(path);
   }
 
   @Patch(":id")

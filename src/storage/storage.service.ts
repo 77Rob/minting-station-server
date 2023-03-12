@@ -31,6 +31,37 @@ export class StorageService {
     return signedUrl;
   }
 
+  async getAllFileUrlsFromPath(path: string) {
+    const files = await this.storage
+      .bucket(this.bucket)
+      .getFiles({ prefix: path });
+    const urls = [];
+
+    for (const file of files[0]) {
+      const expirationTime = Date.now() + 10 * 60 * 1000;
+      const [signedUrl] = await file.getSignedUrl({
+        action: "read",
+        expires: expirationTime,
+      });
+      urls.push(signedUrl);
+    }
+    return urls;
+  }
+
+  async getAllFilesFromPath(path: string) {
+    const files = await this.storage
+      .bucket(this.bucket)
+      .getFiles({ prefix: path });
+
+    return await Promise.all(
+      files[0].map(async (file) => {
+        const [contents] = await file.download();
+        const jsonObject = JSON.parse(contents.toString("utf8"));
+        return jsonObject;
+      })
+    );
+  }
+
   async saveMedia(
     path: string,
     contentType: string,
@@ -60,13 +91,6 @@ export class StorageService {
       .bucket(this.bucket)
       .file(path)
       .delete({ ignoreNotFound: true });
-  }
-
-  async getAllFileUrlsFromPath(path: string) {
-    const files = await this.storage
-      .bucket(this.bucket)
-      .getFiles({ prefix: path });
-    return files;
   }
 
   async get(path: string): Promise<StorageFile> {

@@ -7,6 +7,8 @@ import { ConfigModule, ConfigService } from "@nestjs/config";
 import { StorageModule } from "./storage/storage.module";
 import { MediaModule } from "./media/media.module";
 import { ImagesModule } from './images/images.module';
+import { Web3storageModule } from './web3storage/web3storage.module';
+import { CollectionModule } from './collection/collection.module';
 
 @Module({
   imports: [
@@ -25,6 +27,8 @@ import { ImagesModule } from './images/images.module';
     StorageModule,
     MediaModule,
     ImagesModule,
+    Web3storageModule,
+    CollectionModule,
   ],
   controllers: [AppController],
   providers: [AppService],

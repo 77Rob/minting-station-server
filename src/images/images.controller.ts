@@ -10,17 +10,25 @@ import {
   UploadedFiles,
   UseInterceptors,
   Headers,
+  Header,
 } from "@nestjs/common";
 import { ImagesService } from "./images.service";
 import { UpdateImageDto } from "./dto/update-image.dto";
 import { StorageService } from "src/storage/storage.service";
 import { FilesInterceptor } from "@nestjs/platform-express";
+import { IImage, Image } from "./entities/image.entity";
+import { Web3storageService } from "src/web3storage/web3storage.service";
+
+type ImagesType = {
+  [key: string]: IImage[];
+};
 
 @Controller("images")
 export class ImagesController {
-  images = {};
+  images: ImagesType = {};
   constructor(
     private readonly imagesService: ImagesService,
+    private readonly web3storageService: Web3storageService,
     private storageService: StorageService
   ) {}
 
@@ -31,7 +39,6 @@ export class ImagesController {
     if (!this.images[userId]) {
       this.images[userId] = [];
     }
-    console.time("Function #1");
 
     const newImagesData = await Promise.all(
       files.map(async (file) => {
@@ -41,11 +48,11 @@ export class ImagesController {
           file.buffer,
           []
         );
-        const imageData = {
-          userId: userId,
+        const imageData: IImage = {
           fileName: file.originalname,
           url: signedUrl,
           name: file.originalname.split(".")[0],
+          description: "",
           attributes: [],
         };
 
@@ -54,7 +61,9 @@ export class ImagesController {
           imageData
         );
 
-        this.images[userId].push(signedUrlImageData);
+        imageData.urlImageData = signedUrlImageData;
+
+        this.images[userId].push(imageData);
         return imageData;
       })
     );
@@ -63,20 +72,43 @@ export class ImagesController {
     return JSON.stringify(newImagesData);
   }
 
-  @Get(":userId")
-  async findAllUserMetadata(@Param("userId") userId: string) {
+  @Get()
+  async findAllUserMetadata(@Headers("userId") userId: any) {
     const path = `/${userId}/image/json`;
 
-    return await this.storageService.getAllFilesFromPath(path);
+    return await this.storageService.getAllParsedJSONFilesFromPath(path);
   }
 
-  @Patch(":id")
-  update(@Param("id") id: string, @Body() updateImageDto: UpdateImageDto) {
-    return this.imagesService.update(+id, updateImageDto);
+  @Post("delete")
+  async delete(@Body() body) {
+    const { fileNames } = body.params;
+    const { userId } = body.headers;
+    await this.imagesService.deleteImages(fileNames, userId);
   }
 
-  @Delete(":id")
-  remove(@Param("id") id: string) {
-    return this.imagesService.remove(+id);
+  @Post("update")
+  async update(@Body() body) {
+    const { imageData } = body.params;
+    const { userId } = body.headers;
+    const path = `/${userId}/image/json`;
+    await this.storageService.saveJSON(
+      `${path}/${imageData.fileName}.json`,
+      imageData
+    );
+  }
+
+  @Get("contractURI")
+  async generateContractURI(@Headers("userId") userId: any, @Param() params) {
+    console.log(params);
+    const cid = await this.web3storageService.uploadJSONFile("", params);
+    return cid;
+  }
+
+  @Get("metadataURI")
+  async generateMetadataURI(@Headers("userId") userId: any) {
+    const cid = await this.imagesService.generateAndUploadMetadataToIPFS(
+      userId
+    );
+    return cid;
   }
 }

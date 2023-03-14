@@ -1,9 +1,15 @@
 import { Timestamp } from "@google-cloud/firestore";
 
+type Collection = {
+  name?: string;
+  address?: string;
+  deployed?: boolean;
+  external_link?: string;
+  description?: string;
+};
+
 export class UsersDocument {
   static collectionName = "users";
-
-  id: string;
-  created: Timestamp;
-  random: any;
+  deployedCollections?: string[];
+  image?: Collection;
 }

@@ -19,15 +19,16 @@ export class UsersService {
     private usersCollection: CollectionReference<UsersDocument>
   ) {}
 
-  async create({ userId }: CreateUserDto) {
-    console.log(userId);
-    const someFile = await fs.readFile("./demo/0_face/face_2.png");
+  async updateImage({ userId, newImage }) {
     const docRef = this.usersCollection.doc(userId);
     await docRef.set({
-      id: userId,
-      created: Timestamp.now(),
-      random: ["1", 2, 6, someFile],
+      image: newImage,
     });
+    return (await docRef.get()).data();
+  }
+
+  async get({ userId }) {
+    const docRef = this.usersCollection.doc(userId);
     return (await docRef.get()).data();
   }
 

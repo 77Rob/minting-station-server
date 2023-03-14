@@ -67,7 +67,6 @@ export class ImagesController {
         return imageData;
       })
     );
-    console.timeEnd("Function #1");
 
     return JSON.stringify(newImagesData);
   }
@@ -95,13 +94,6 @@ export class ImagesController {
       `${path}/${imageData.fileName}.json`,
       imageData
     );
-  }
-
-  @Get("contractURI")
-  async generateContractURI(@Headers("userId") userId: any, @Param() params) {
-    console.log(params);
-    const cid = await this.web3storageService.uploadJSONFile("", params);
-    return cid;
   }
 
   @Get("metadataURI")

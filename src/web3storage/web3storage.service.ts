@@ -33,17 +33,21 @@ export class Web3storageService {
     return cid;
   }
 
+  cidToUrl(cid) {
+    return `${this.ipfsResolver}${cid}`;
+  }
+
   async getFiles(path) {
     const files = await getFilesFromPath(path);
     console.log(`read ${files.length} file(s) from ${path}`);
     return files;
   }
 
-  async uploadFiles(files) {
+  async uploadFiles(files, wrapWithDirectory = true) {
     console.log("Uploading files");
     console.log(files);
     const cid = await this.storage.put(files, {
-      wrapWithDirectory: true,
+      wrapWithDirectory,
     });
     console.log(cid);
     return cid;

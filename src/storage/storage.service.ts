@@ -33,6 +33,18 @@ export class StorageService {
     return signedUrl;
   }
 
+  async getJSON(path: string): Promise<any> {
+    const metadataFile = await this.storage
+      .bucket(this.bucket)
+      .file(path)
+      .download();
+
+    const [buffer] = metadataFile;
+    const jsonObject = JSON.parse(buffer.toString("utf8"));
+
+    return jsonObject;
+  }
+
   async getAllFilesFromImagePath(userId: string): Promise<[File, any][]> {
     const path = `/${userId}/image/images/`;
 

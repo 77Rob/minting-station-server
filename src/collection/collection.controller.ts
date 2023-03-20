@@ -1,3 +1,4 @@
+import { AiService } from "./../ai/ai.service";
 import { Web3storageService } from "./../web3storage/web3storage.service";
 import {
   Controller,
@@ -20,7 +21,8 @@ export class CollectionController {
   collection = {};
   constructor(
     private readonly web3storageService: Web3storageService,
-    private storageService: StorageService
+    private storageService: StorageService,
+    private aiService: AiService
   ) {}
 
   @Get()
@@ -68,14 +70,31 @@ export class CollectionController {
 
     await this.storageService.saveJSON(
       `/abi/${deploymentAddress}.json`,
+
       body.params
     );
   }
 
+  @Get("ai")
+  async getAi() {
+    const response = await this.aiService.query({
+      inputs: "Turtle playing piano",
+    });
+    console.log(response);
+    const buffer = new File([response], "turtle.png");
+
+    await this.storageService.saveImage(`/ai/turtle.png`, buffer);
+  }
+
   @Get("abi/:address")
   async getAbi(@Param("address") address: string) {
-    const abi = await this.storageService.getJSON(`/abi/${address}.json`);
-    return abi;
+    try {
+      const abi = await this.storageService.getJSON(`abi/${address}.json`);
+      return abi;
+    } catch (e) {
+      console.log(e);
+      return undefined;
+    }
   }
 
   @Post("contractURI")

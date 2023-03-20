@@ -33,6 +33,13 @@ export class StorageService {
     return signedUrl;
   }
 
+  async saveImage(path: string, imageFile: Blob) {
+    const file = await this.storage
+      .bucket(this.bucket)
+      .file(path)
+      .save(imageFile.toString());
+  }
+
   async getJSON(path: string): Promise<any> {
     const metadataFile = await this.storage
       .bucket(this.bucket)

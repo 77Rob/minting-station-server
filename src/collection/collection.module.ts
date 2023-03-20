@@ -1,3 +1,4 @@
+import { AiService } from "./../ai/ai.service";
 import { Module } from "@nestjs/common";
 import { CollectionService } from "./collection.service";
 import { CollectionController } from "./collection.controller";
@@ -9,6 +10,7 @@ import { ImagesService } from "src/images/images.service";
   providers: [
     CollectionService,
     Web3storageService,
+    AiService,
     StorageService,
     ImagesService,
   ],

@@ -14,7 +14,6 @@ import {
 } from "@nestjs/common";
 import { ImagesService } from "./images.service";
 import { StorageService } from "src/storage/storage.service";
-import { FilesInterceptor } from "@nestjs/platform-express";
 import { IImage, Image } from "./entities/image.entity";
 import { Web3storageService } from "src/web3storage/web3storage.service";
 import { AiService } from "src/ai/ai.service";
@@ -34,21 +33,23 @@ export class ImagesController {
   ) {}
 
   @Post()
-  @UseInterceptors(FilesInterceptor("file"))
-  async create(@UploadedFiles() files, @Headers() headers) {
+  async create(@Headers() headers, @Req() req) {
     const userId = headers.userid;
+    const files = req.files;
     if (!this.images[userId]) {
       this.images[userId] = [];
     }
 
     const newImagesData = await Promise.all(
       files.map(async (file) => {
+        console.log(file);
         const signedUrl = await this.storageService.saveMedia(
           `/${userId}/image/images/${file.originalname}`,
-          file.mimetype,
+          file.encoding,
           file.buffer,
           []
         );
+        console.log(signedUrl);
         const imageData: IImage = {
           fileName: file.originalname,
           url: signedUrl,

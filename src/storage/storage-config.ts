@@ -1,8 +1,10 @@
 const StorageConfig = {
-  projectId: process.env.GOOGLE_PROJECT_ID,
-  private_key: process.env.GOOGLE_PRIVATE_KEY,
-  client_email: process.env.GOOGLE_CLIENT_EMAIL,
-  mediaBucket: process.env.GOOGLE_STORAGE_MEDIA_BUCKET,
+  projectId: "minting-station",
+  private_key:
+    "-----BEGIN PRIVATE KEY-----\nMIIEvgIBADANBgkqhkiG9w0BAQEFAASCBKgwggSkAgEAAoIBAQCuLZ/FjMSwB+1y\ngxPHZxNklpyS28u8083FK+iKmjuZprE8HXs3EtdxjbrgwZcvzumbSy1yHsLHOpp+\n0rWlT8B9nQvVH/XdIvas220yCOPrUlhgJF9l5x9HTjSc+jeP4wMGu9RbqS5TYFoE\n9gndBYHgpjlnwQqJ59Qy5N9plsp5DXe4WKrDEim7KE/+ZZzSgn/RKf3zgRX2Cfcx\nOvskYcJxyahhzHZq9B4Zfr3u8NlWDIh1Wrh/pMJ+PxqGOiqDhxlwJ57DJ7er2m9d\n9wWUg0+qmCmSQI7kxIW69/bbdvZCBqtjfWiWAIquJJ/JZFugocn5JEJXngkovsGi\nfNdjLNTxAgMBAAECggEADSquwsDEQj2p100NquEMXWoTQPjI5dJ/DMd9HIknNejH\ndMYSa+nf4RoihTNX30nSwqYECUtGVHLbffh7ZG6Vxwke/V1H+TpXj7Pwr7vDUE/Z\nFWolJK9m372LivhRSJkTv/0P7bPpfW0HBmFRAo++2dbG988RzGClhl64fXi5f+gC\n9QEFe8PoRCVNkGTemi/EgK9n9bhNoutso0fhOefV9nP84Nn4uEt7a40VH73K9l6h\neaY6PtpzYGsyZr6gYKiraEQqeUrbwF7w2uv+TPSHo20pEUpm8MjnFxpaniVRn6bk\nU1qJmDeKInUhiWoj4un815cWY0eCrphKDlOZjjK8zwKBgQDXkQUHEuYq1c9mF+/8\nZ72cFhfas8vKGPrHHW5Gg1xAs/c3LSn44PpkNZ5NUfUlpYputeMxY+NL6z+AC4tg\nN5Q/N2YnS0eAok16/zXq7bamtktFA7p3Kczlt4Ky/SziRKcAAaxVmE18/TF62lc5\nwqjVuLTfwlWdDmDWvWxvzyGO3wKBgQDO2T2D3kMF9r2Uk6oZ98ar0EvVHJuw21ej\n0wsBpq00Czbr+Sy47sWTh4KH+pO/8enlKgHuuijrUgYLzXifDFybmLXAC8znbBLh\njQBgKfbxAcNdFo5q3Rav+MXqk4MhDls307rSnkkhT2S0wan/fh/TR6WvyCkwAnpW\nwfGaxYGmLwKBgQC/PUOlk+moJMj7PM9GME6xk5QUDSAFKgYI8Z4sZktIh6ARTjsH\nNahNkJfg5o3CmUrnjuuAnKpAZvKNyTAb6xLUxnQU9h74CoUMUi9mPP+mhODf2D/r\niaTiQtxrqFnSXq99PP7DbPuJoCHuaJergXtBJ70nKYPEcsYMnD4AL1UJJwKBgQCT\n3yOl2MerRMgkpietZr+FZmQ/1rLKjROrDx1IMeKSWQ4LRded4TwninFbSlxDlOpz\npEM7aaQFDl86Isp/UTQHG/WadBUov88DpWxGUtmxU2RZcN2hMaqdZEgAuTG9+Ohn\nEZr2JKf9AyfoPKaN+pk/znF5J6uiIbNZwE47KcTUiwKBgBYJmf10H+iFND/c5r2u\nOW129D6RB/Kd3LtE0EOwx2Ut46s/3M6PLkJVyp0MT1WbqaXDCOWLBYApuM+xeJ0/\n0LfAfyG4328DC5BeGHYuR8id8le0lmBJL15DB/EIO46pVktfJoayhwwYO1oiga73\n4EeaEEaSje3I1YH1o5fQQ2m4\n-----END PRIVATE KEY-----\n",
+  client_email:
+    "firebase-adminsdk-goobe@minting-station.iam.gserviceaccount.com",
+  mediaBucket: "minting-station.appspot.com",
 };
 
 export default StorageConfig;

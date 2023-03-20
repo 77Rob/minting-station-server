@@ -105,6 +105,30 @@ export class ImagesController {
     console.log(signedUrl);
     return imagedata;
   }
+  @Get("test")
+  async test() {
+    const image = await this.aiService.generate("prompt");
+
+    const ipfsCID = await this.web3storageService.uploadFiles([image], false);
+    const ipfsURL = this.web3storageService.cidToUrl(ipfsCID);
+
+    const imagedata: IImage = {
+      name: "prompt",
+      description: "prompt",
+      url: ipfsURL,
+      attributes: [],
+      fileName: `prompt.json`,
+    };
+
+    const signedUrl = await this.storageService.saveJSON(
+      `/test/ai/json/prompt.json`,
+      imagedata
+    );
+    console.log(imagedata);
+
+    console.log(signedUrl);
+    return imagedata;
+  }
 
   @Get()
   async findAllUserMetadata(@Headers("userId") userId: any) {

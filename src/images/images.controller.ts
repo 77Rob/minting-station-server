@@ -13,11 +13,11 @@ import {
   Header,
 } from "@nestjs/common";
 import { ImagesService } from "./images.service";
-import { UpdateImageDto } from "./dto/update-image.dto";
 import { StorageService } from "src/storage/storage.service";
 import { FilesInterceptor } from "@nestjs/platform-express";
 import { IImage, Image } from "./entities/image.entity";
 import { Web3storageService } from "src/web3storage/web3storage.service";
+import { AiService } from "src/ai/ai.service";
 
 type ImagesType = {
   [key: string]: IImage[];
@@ -29,7 +29,8 @@ export class ImagesController {
   constructor(
     private readonly imagesService: ImagesService,
     private readonly web3storageService: Web3storageService,
-    private storageService: StorageService
+    private storageService: StorageService,
+    private aiService: AiService
   ) {}
 
   @Post()
@@ -71,9 +72,47 @@ export class ImagesController {
     return JSON.stringify(newImagesData);
   }
 
+  @Post("generateai")
+  async getAi(@Body() body) {
+    const { prompt } = body.params;
+    const { userId } = body.headers;
+    console.log(prompt, userId);
+
+    const image = await this.aiService.generate(prompt);
+    if (image == undefined) {
+      return { error: "Api limit reached. Please try again later." };
+    }
+
+    const ipfsCID = await this.web3storageService.uploadFiles([image], false);
+    const ipfsURL = this.web3storageService.cidToUrl(ipfsCID);
+    const imagedata: IImage = {
+      name: prompt,
+      description: prompt,
+      url: ipfsURL,
+      attributes: [],
+      fileName: `${prompt}.json`,
+    };
+
+    const signedUrl = await this.storageService.saveJSON(
+      `/${userId}/ai/json/${prompt}.json`,
+      imagedata
+    );
+    console.log(imagedata);
+
+    console.log(signedUrl);
+    return imagedata;
+  }
+
   @Get()
   async findAllUserMetadata(@Headers("userId") userId: any) {
     const path = `/${userId}/image/json`;
+
+    return await this.storageService.getAllParsedJSONFilesFromPath(path);
+  }
+
+  @Get("ai")
+  async findAllUserAiImageMetadata(@Headers("userId") userId: any) {
+    const path = `/${userId}/ai/json`;
 
     return await this.storageService.getAllParsedJSONFilesFromPath(path);
   }

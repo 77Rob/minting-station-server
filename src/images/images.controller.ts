@@ -1,22 +1,9 @@
-import {
-  Controller,
-  Get,
-  Post,
-  Body,
-  Patch,
-  Param,
-  Delete,
-  Req,
-  UploadedFiles,
-  UseInterceptors,
-  Headers,
-  Header,
-} from "@nestjs/common";
-import { ImagesService } from "./images.service";
-import { StorageService } from "src/storage/storage.service";
-import { IImage, Image } from "./entities/image.entity";
-import { Web3storageService } from "src/web3storage/web3storage.service";
+import { Body, Controller, Get, Headers, Post, Req } from "@nestjs/common";
 import { AiService } from "src/ai/ai.service";
+import { StorageService } from "src/storage/storage.service";
+import { Web3storageService } from "src/web3storage/web3storage.service";
+import { IImage } from "./entities/image.entity";
+import { ImagesService } from "./images.service";
 
 type ImagesType = {
   [key: string]: IImage[];
@@ -24,7 +11,6 @@ type ImagesType = {
 
 @Controller("images")
 export class ImagesController {
-  images: ImagesType = {};
   constructor(
     private readonly imagesService: ImagesService,
     private readonly web3storageService: Web3storageService,
@@ -33,51 +19,22 @@ export class ImagesController {
   ) {}
 
   @Post()
-  async create(@Headers() headers, @Req() req) {
+  async upload(@Headers() headers, @Req() req) {
     const userId = headers.userid;
     const files = req.files;
-    if (!this.images[userId]) {
-      this.images[userId] = [];
-    }
 
-    const newImagesData = await Promise.all(
-      files.map(async (file) => {
-        console.log(file);
-        const signedUrl = await this.storageService.saveMedia(
-          `/${userId}/image/images/${file.originalname}`,
-          file.encoding,
-          file.buffer,
-          []
-        );
-        console.log(signedUrl);
-        const imageData: IImage = {
-          fileName: file.originalname,
-          url: signedUrl,
-          name: file.originalname.split(".")[0],
-          description: "",
-          attributes: [],
-        };
-
-        const signedUrlImageData = await this.storageService.saveJSON(
-          `/${userId}/image/json/${file.originalname}.json`,
-          imageData
-        );
-
-        imageData.urlImageData = signedUrlImageData;
-
-        this.images[userId].push(imageData);
-        return imageData;
-      })
+    const uploadedImageData = await this.imagesService.uploadImages(
+      files,
+      userId
     );
 
-    return JSON.stringify(newImagesData);
+    return JSON.stringify(uploadedImageData);
   }
 
   @Post("generateai")
   async getAi(@Body() body) {
     const { prompt } = body.params;
     const { userId } = body.headers;
-    console.log(prompt, userId);
 
     const image = await this.aiService.generate(prompt);
     if (image == undefined) {
@@ -101,62 +58,41 @@ export class ImagesController {
       `/${userId}/ai/json/${prompt}.json`,
       imagedata
     );
-    console.log(imagedata);
 
-    console.log(signedUrl);
-    return imagedata;
-  }
-  @Get("test")
-  async test() {
-    const image = await this.aiService.generate("prompt");
-
-    const ipfsCID = await this.web3storageService.uploadFiles([image], false);
-    const ipfsURL = this.web3storageService.cidToUrl(ipfsCID);
-
-    const imagedata: IImage = {
-      name: "prompt",
-      description: "prompt",
-      url: ipfsURL,
-      attributes: [],
-      fileName: `prompt.json`,
-    };
-
-    const signedUrl = await this.storageService.saveJSON(
-      `/test/ai/json/prompt.json`,
-      imagedata
-    );
-    console.log(imagedata);
-
-    console.log(signedUrl);
     return imagedata;
   }
 
   @Get()
-  async findAllUserMetadata(@Headers("userId") userId: any) {
+  async getUserImageData(@Headers("userId") userId: any): Promise<IImage[]> {
     const path = `/${userId}/image/json`;
 
     return await this.storageService.getAllParsedJSONFilesFromPath(path);
   }
 
   @Get("ai")
-  async findAllUserAiImageMetadata(@Headers("userId") userId: any) {
+  async getUserAiGeneratedImageData(
+    @Headers("userId") userId: any
+  ): Promise<IImage[]> {
     const path = `/${userId}/ai/json`;
 
     return await this.storageService.getAllParsedJSONFilesFromPath(path);
   }
 
   @Post("delete")
-  async delete(@Body() body) {
+  async deleteUserImages(@Body() body): Promise<void> {
     const { fileNames } = body.params;
     const { userId } = body.headers;
-    await this.imagesService.deleteImages(fileNames, userId);
+
+    await this.imagesService.deleteUserImages(fileNames, userId);
   }
 
   @Post("update")
-  async update(@Body() body) {
+  async updateImageData(@Body() body): Promise<void> {
     const { imageData } = body.params;
     const { userId } = body.headers;
+
     const path = `/${userId}/image/json`;
+
     await this.storageService.saveJSON(
       `${path}/${imageData.fileName}.json`,
       imageData
@@ -164,10 +100,12 @@ export class ImagesController {
   }
 
   @Post("ai/update")
-  async updateai(@Body() body) {
+  async updateAiGeneratedImageData(@Body() body): Promise<void> {
     const { imageData } = body.params;
     const { userId } = body.headers;
+
     const path = `/${userId}/ai/json`;
+
     await this.storageService.saveJSON(
       `${path}/${imageData.fileName}.json`,
       imageData
@@ -175,18 +113,18 @@ export class ImagesController {
   }
 
   @Get("metadataURI")
-  async generateMetadataURI(@Headers("userId") userId: any) {
-    const cid = await this.imagesService.generateAndUploadMetadataToIPFS(
-      userId
-    );
-    return cid;
+  async generateMetadataURI(@Headers("userId") userId: any): Promise<string> {
+    const metadataUri =
+      await this.imagesService.generateAndUploadMetadataToIPFS(userId);
+    return metadataUri;
   }
 
   @Get("ai/metadataURI")
-  async generateMetadataURIAi(@Headers("userId") userId: any) {
-    const cid = await this.imagesService.generateAndUploadMetadataToIPFSAi(
-      userId
-    );
-    return cid;
+  async generateMetadataURIAi(@Headers("userId") userId: any): Promise<string> {
+    const metadataUri =
+      await this.imagesService.uploadMetadataFilesToIpfsAiGeneratedImages(
+        userId
+      );
+    return metadataUri;
   }
 }

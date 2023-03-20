@@ -1,6 +1,7 @@
 import { Web3storageService } from "./../web3storage/web3storage.service";
 import { Injectable } from "@nestjs/common";
 import { StorageService } from "src/storage/storage.service";
+import { IImage } from "./entities/image.entity";
 
 type MetadataURI = string;
 
@@ -11,17 +12,58 @@ export class ImagesService {
     private web3storageService: Web3storageService
   ) {}
 
-  async deleteImages(imageIds: string[], userId: string) {
-    const pathJSON = `/${userId}/image/json`;
-    const pathImages = `/${userId}/image/images`;
+  async deleteUserImages(imageNames: string[], userId: string) {
+    const pathToJSON = `/${userId}/image/json`;
+    const pathToImages = `/${userId}/image/images`;
+
     await Promise.all(
-      imageIds.map(async (id) => {
-        await this.storageService.delete(`${pathJSON}/${id}.json`);
+      imageNames.map(async (name: string) => {
+        await this.storageService.delete(`${pathToJSON}/${name}.json`);
       })
     );
+
     await Promise.all(
-      imageIds.map(async (id) => {
-        await this.storageService.delete(`${pathImages}/${id}`);
+      imageNames.map(async (name: string) => {
+        await this.storageService.delete(`${pathToImages}/${name}`);
+      })
+    );
+  }
+  async deleteUsersAiGeneratedImages(imageNames: string[], userId: string) {
+    const path = `/${userId}/ai/json`;
+
+    await Promise.all(
+      imageNames.map(async (name) => {
+        await this.storageService.delete(`${path}/${name}.json`);
+      })
+    );
+  }
+
+  async uploadImages(files: any, userId: string): Promise<IImage[]> {
+    return await Promise.all(
+      files.map(async (file) => {
+        const signedUrl = await this.storageService.saveMedia(
+          `/${userId}/image/images/${file.originalname}`,
+          file.encoding,
+          file.buffer,
+          []
+        );
+
+        const imageData: IImage = {
+          fileName: file.originalname,
+          url: signedUrl,
+          name: file.originalname.split(".")[0],
+          description: "",
+          attributes: [],
+        };
+
+        const signedUrlImageData = await this.storageService.saveJSON(
+          `/${userId}/image/json/${file.originalname}.json`,
+          imageData
+        );
+
+        imageData.urlImageData = signedUrlImageData;
+
+        return imageData;
       })
     );
   }
@@ -33,16 +75,14 @@ export class ImagesService {
 
     const imagesCID = await this.web3storageService.uploadFiles(
       filesAndMetadata.map((file) => {
-        console.log(file[0]);
-        console.log(file[0].name);
         return file[0];
       })
     );
 
-    const imagesUrl = `https://dweb.link/ipfs/${imagesCID}`;
-
+    const imagesUrl = this.web3storageService.cidToUrl(imagesCID);
     const metadataFiles = filesAndMetadata.map((file, index) => {
       const fileData = file[1];
+
       const metadata = {
         image: `${imagesUrl}/${file[0].name}`,
         description: fileData.description,
@@ -54,21 +94,27 @@ export class ImagesService {
           };
         }),
       };
-      return this.web3storageService.makeFileObject(`${index}`, metadata);
+
+      return this.web3storageService.convertObjectToJSONFile(
+        `${index}`,
+        metadata
+      );
     });
 
     const metadataCid = await this.web3storageService.uploadFiles(
       metadataFiles
     );
-    const metadataUrl = `https://dweb.link/ipfs/${metadataCid}`;
 
+    const metadataUrl = this.web3storageService.cidToUrl(metadataCid);
     return metadataUrl;
   }
-  async generateAndUploadMetadataToIPFSAi(
+
+  async uploadMetadataFilesToIpfsAiGeneratedImages(
     userId: string
   ): Promise<MetadataURI> {
+    const path = `/${userId}/ai/json`;
     const metadata = await this.storageService.getAllParsedJSONFilesFromPath(
-      `/${userId}/ai/json`
+      path
     );
 
     const metadataFiles = metadata.map((file, index) => {
@@ -83,14 +129,19 @@ export class ImagesService {
           };
         }),
       };
-      return this.web3storageService.makeFileObject(`${index}`, metadata);
+
+      return this.web3storageService.convertObjectToJSONFile(
+        `${index}`,
+        metadata
+      );
     });
 
     const metadataCid = await this.web3storageService.uploadFiles(
       metadataFiles
     );
+
     const metadataUrl = this.web3storageService.cidToUrl(metadataCid);
-    console.log("Metadata Url: ", metadataUrl);
+
     return metadataUrl;
   }
 }

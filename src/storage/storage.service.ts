@@ -1,9 +1,8 @@
-import { StorageFile } from "./storage-file";
 import { DownloadResponse, Storage } from "@google-cloud/storage";
 import { Injectable } from "@nestjs/common";
-import StorageConfig from "./storage-config";
 import { File } from "web3.storage";
-import { IImage } from "src/images/entities/image.entity";
+import StorageConfig from "./storage-config";
+import { StorageFile } from "./storage-file";
 
 @Injectable()
 export class StorageService {
@@ -21,7 +20,7 @@ export class StorageService {
     this.bucket = StorageConfig.mediaBucket;
   }
 
-  async saveJSON(path: string, jsonObject: any) {
+  async saveJSON(path: string, jsonObject: any): Promise<string> {
     const file = this.storage.bucket(this.bucket).file(path);
     await file.save(JSON.stringify(jsonObject));
 
@@ -33,8 +32,8 @@ export class StorageService {
     return signedUrl;
   }
 
-  async saveImage(path: string, imageFile: Blob) {
-    const file = await this.storage
+  async saveImage(path: string, imageFile: Blob): Promise<void> {
+    await this.storage
       .bucket(this.bucket)
       .file(path)
       .save(imageFile.toString());
@@ -67,38 +66,16 @@ export class StorageService {
         const imageFile = new File([bufferImage], `${index}.png`);
 
         const imageFileName = file.name.split("/image/images/")[1];
-        const path = `/${userId}/image/json/${imageFileName}.json`;
-        const metadataFile = await this.storage
-          .bucket(this.bucket)
-          .file(path)
-          .download();
 
-        const [buffer] = metadataFile;
-        const jsonObject = JSON.parse(buffer.toString("utf8"));
+        const path = `/${userId}/image/json/${imageFileName}.json`;
+        const jsonObject = await this.getJSON(path);
 
         return [imageFile, jsonObject];
       })
     );
   }
 
-  async getFilesWithMetadata(metadataPath: string) {
-    const files = await this.storage
-      .bucket(this.bucket)
-      .getFiles({ prefix: metadataPath });
-
-    return await Promise.all(
-      files[0].map(async (file, index) => {
-        const fileResponse = await file.download();
-        const [buffer] = fileResponse;
-        console.log(file.name);
-        const fileI = new File([buffer], file.name);
-
-        return fileI;
-      })
-    );
-  }
-
-  async getAllParsedJSONFilesFromPath(path: string) {
+  async getAllParsedJSONFilesFromPath(path: string): Promise<any[]> {
     const files = await this.storage
       .bucket(this.bucket)
       .getFiles({ prefix: path });
@@ -113,22 +90,12 @@ export class StorageService {
     );
   }
 
-  async getFileAndMetadata(userId: string, fileName: string): Promise<any> {
-    const path = `/${userId}/image/json/${fileName}.json`;
-    const file = await this.storage.bucket(this.bucket).file(path).download();
-
-    const [buffer] = file;
-    const jsonObject = JSON.parse(buffer.toString("utf8"));
-
-    return jsonObject;
-  }
-
   async saveMedia(
     path: string,
     contentType: string,
     media: Buffer,
     metadata: { [key: string]: string | any }[]
-  ) {
+  ): Promise<string> {
     const object = metadata.reduce((obj, item) => Object.assign(obj, item), {});
     const file = this.storage.bucket(this.bucket).file(path);
     const stream = file.createWriteStream();
@@ -147,7 +114,7 @@ export class StorageService {
     return signedUrl;
   }
 
-  async delete(path: string) {
+  async delete(path: string): Promise<void> {
     await this.storage
       .bucket(this.bucket)
       .file(path)

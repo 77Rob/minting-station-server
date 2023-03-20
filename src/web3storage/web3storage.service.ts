@@ -13,37 +13,34 @@ export class Web3storageService {
     this.ipfsResolver = Web3StorageConfig.ipfsResolver;
   }
 
-  makeFileObject(fileName, object) {
-    // You can create File objects from a Blob of binary data
-    // see: https://developer.mozilla.org/en-US/docs/Web/API/Blob
-
+  convertObjectToJSONFile(fileName: string, object: any): File {
     const blob = new Blob([JSON.stringify(object)], {
       type: "application/json",
     });
 
-    console.log(blob);
     return new File([blob], fileName);
   }
 
-  async uploadJSONFile(fileName, object) {
-    const file = this.makeFileObject(fileName, object);
+  async uploadJSONFile(fileName: string, object: any): Promise<string> {
+    const file = this.convertObjectToJSONFile(fileName, object);
     const cid = await this.storage.put([file]);
     return cid;
   }
 
-  cidToUrl(cid) {
+  cidToUrl(cid: string): string {
     return `${this.ipfsResolver}${cid}`;
   }
 
-  async getFiles(path) {
+  async getFiles(path: string): Promise<any[]> {
     const files = await getFilesFromPath(path);
     console.log(`read ${files.length} file(s) from ${path}`);
     return files;
   }
 
-  async uploadFiles(files, wrapWithDirectory = true) {
-    console.log("Uploading files");
-    console.log(files);
+  async uploadFiles(
+    files: File[],
+    wrapWithDirectory: boolean = true
+  ): Promise<string> {
     const cid = await this.storage.put(files, {
       wrapWithDirectory,
     });

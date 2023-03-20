@@ -1,13 +1,10 @@
 import { Module } from "@nestjs/common";
-import { AppController } from "./app.controller";
-import { AppService } from "./app.service";
-import { ConfigModule, ConfigService } from "@nestjs/config";
-import { StorageModule } from "./storage/storage.module";
-import { MediaModule } from "./media/media.module";
-import { ImagesModule } from "./images/images.module";
-import { Web3storageModule } from "./web3storage/web3storage.module";
-import { CollectionModule } from "./collection/collection.module";
+import { ConfigModule } from "@nestjs/config";
 import { AiModule } from "./ai/ai.module";
+import { CollectionModule } from "./collection/collection.module";
+import { ImagesModule } from "./images/images.module";
+import { StorageModule } from "./storage/storage.module";
+import { Web3storageModule } from "./web3storage/web3storage.module";
 
 @Module({
   imports: [
@@ -15,13 +12,12 @@ import { AiModule } from "./ai/ai.module";
       isGlobal: true,
     }),
     StorageModule,
-    MediaModule,
     ImagesModule,
     Web3storageModule,
     CollectionModule,
     AiModule,
   ],
-  controllers: [AppController],
-  providers: [AppService],
+  controllers: [],
+  providers: [],
 })
 export class AppModule {}

@@ -1,38 +1,28 @@
-import { IImage } from "src/images/entities/image.entity";
-import { AiService } from "./../ai/ai.service";
-import { Web3storageService } from "./../web3storage/web3storage.service";
 import {
+  Body,
   Controller,
-  Headers,
   Get,
+  Headers,
   Param,
   Post,
-  UploadedFiles,
-  UseInterceptors,
   Req,
-  Body,
 } from "@nestjs/common";
-import { File } from "web3.storage";
-import { CollectionService } from "./collection.service";
 import { StorageService } from "src/storage/storage.service";
-import { FilesInterceptor } from "@nestjs/platform-express";
+import { File } from "web3.storage";
+import { Web3storageService } from "./../web3storage/web3storage.service";
 
 @Controller("collection")
 export class CollectionController {
   collection = {};
   constructor(
     private readonly web3storageService: Web3storageService,
-    private storageService: StorageService,
-    private aiService: AiService
+    private storageService: StorageService
   ) {}
 
   @Get()
-  getUserCollection(@Headers() headers) {
+  getUserCollection(@Headers() headers): any {
     const userId = headers.userid;
 
-    console.log(this.collection[userId]);
-    console.log(userId);
-    console.log(this.collection);
     if (!this.collection[userId]) {
       this.collection[userId] = {
         image: "",
@@ -43,8 +33,8 @@ export class CollectionController {
   }
 
   @Post("image")
-  @UseInterceptors(FilesInterceptor("image"))
-  async create(@UploadedFiles() files, @Headers() headers) {
+  async create(@Req() req, @Headers() headers): Promise<string> {
+    const files = req.files;
     const userId = headers.userid;
 
     const fileFormatted = new File([files[0].buffer], files[0].originalname);
@@ -64,37 +54,30 @@ export class CollectionController {
   }
 
   @Post("abi")
-  async saveAbi(@Headers() headers, @Body() body) {
-    const { deploymentAddress } = body.params;
+  async saveAbi(@Body() body) {
+    const { deploymentAddress, abi } = body.params;
 
-    await this.storageService.saveJSON(
-      `/abi/${deploymentAddress}.json`,
-
-      body.params
-    );
+    await this.storageService.saveJSON(`/abi/${deploymentAddress}.json`, abi);
   }
 
   @Get("abi/:address")
-  async getAbi(@Param("address") address: string) {
+  async getAbi(@Param("address") address: string): Promise<any> {
     try {
       const abi = await this.storageService.getJSON(`abi/${address}.json`);
       return abi;
     } catch (e) {
-      console.log(e);
       return undefined;
     }
   }
 
   @Post("contractURI")
-  async generateContractURI(
-    @Headers("userId") userId: any,
-    @Req() req,
-    @Body() body
-  ) {
+  async generateContractURI(@Body() body): Promise<string> {
     const params = body.params;
+    const fileObject = this.web3storageService.convertObjectToJSONFile(
+      "",
+      params
+    );
 
-    // console.log(req);
-    const fileObject = this.web3storageService.makeFileObject("", params);
     const cid = await this.web3storageService.uploadFiles([fileObject], false);
     const url = this.web3storageService.cidToUrl(cid);
 

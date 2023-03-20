@@ -34,6 +34,7 @@ export class AiService {
       return imageFile;
     } catch (e) {
       // Request can fail because of temporararely reaching the API rate limit
+      console.error(e);
       return undefined;
     }
   }

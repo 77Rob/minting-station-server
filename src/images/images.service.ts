@@ -64,4 +64,33 @@ export class ImagesService {
 
     return metadataUrl;
   }
+  async generateAndUploadMetadataToIPFSAi(
+    userId: string
+  ): Promise<MetadataURI> {
+    const metadata = await this.storageService.getAllParsedJSONFilesFromPath(
+      `/${userId}/ai/json`
+    );
+
+    const metadataFiles = metadata.map((file, index) => {
+      const metadata = {
+        image: file.url,
+        description: file.description,
+        name: file.name,
+        attributes: file.attributes.map((attribute) => {
+          return {
+            trait_type: attribute[0],
+            value: attribute[1],
+          };
+        }),
+      };
+      return this.web3storageService.makeFileObject(`${index}`, metadata);
+    });
+
+    const metadataCid = await this.web3storageService.uploadFiles(
+      metadataFiles
+    );
+    const metadataUrl = this.web3storageService.cidToUrl(metadataCid);
+    console.log("Metadata Url: ", metadataUrl);
+    return metadataUrl;
+  }
 }

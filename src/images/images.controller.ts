@@ -80,7 +80,10 @@ export class ImagesController {
 
     const image = await this.aiService.generate(prompt);
     if (image == undefined) {
-      return { error: "Api limit reached. Please try again later." };
+      return {
+        type: "error",
+        message: "Api limit reached. Please try again later.",
+      };
     }
 
     const ipfsCID = await this.web3storageService.uploadFiles([image], false);
@@ -135,9 +138,28 @@ export class ImagesController {
     );
   }
 
+  @Post("ai/update")
+  async updateai(@Body() body) {
+    const { imageData } = body.params;
+    const { userId } = body.headers;
+    const path = `/${userId}/ai/json`;
+    await this.storageService.saveJSON(
+      `${path}/${imageData.fileName}.json`,
+      imageData
+    );
+  }
+
   @Get("metadataURI")
   async generateMetadataURI(@Headers("userId") userId: any) {
     const cid = await this.imagesService.generateAndUploadMetadataToIPFS(
+      userId
+    );
+    return cid;
+  }
+
+  @Get("ai/metadataURI")
+  async generateMetadataURIAi(@Headers("userId") userId: any) {
+    const cid = await this.imagesService.generateAndUploadMetadataToIPFSAi(
       userId
     );
     return cid;

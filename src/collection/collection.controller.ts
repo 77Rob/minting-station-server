@@ -1,3 +1,4 @@
+import { IImage } from "src/images/entities/image.entity";
 import { AiService } from "./../ai/ai.service";
 import { Web3storageService } from "./../web3storage/web3storage.service";
 import {
@@ -65,25 +66,12 @@ export class CollectionController {
   @Post("abi")
   async saveAbi(@Headers() headers, @Body() body) {
     const { deploymentAddress } = body.params;
-    console.log(deploymentAddress);
-    console.log(body.params);
 
     await this.storageService.saveJSON(
       `/abi/${deploymentAddress}.json`,
 
       body.params
     );
-  }
-
-  @Get("ai")
-  async getAi() {
-    const response = await this.aiService.query({
-      inputs: "Turtle playing piano",
-    });
-    console.log(response);
-    const buffer = new File([response], "turtle.png");
-
-    await this.storageService.saveImage(`/ai/turtle.png`, buffer);
   }
 
   @Get("abi/:address")
@@ -104,13 +92,12 @@ export class CollectionController {
     @Body() body
   ) {
     const params = body.params;
-    console.log("params432");
-    console.log(params);
+
     // console.log(req);
     const fileObject = this.web3storageService.makeFileObject("", params);
     const cid = await this.web3storageService.uploadFiles([fileObject], false);
     const url = this.web3storageService.cidToUrl(cid);
-    console.log(url);
+
     return url;
   }
 }

@@ -5,8 +5,6 @@ import { getFilesFromPath } from "web3.storage";
 
 @Injectable()
 export class Web3storageService {
-  // IPFS RESOLVER https://dweb.link/ipfs/YOUR_CID
-  // To avoid having your files wrapped in a directory listing, set the wrapWithDirectory: option to false when uploading using the JavaScript client.
   private storage: Web3Storage;
   private ipfsResolver: string;
 
@@ -49,7 +47,7 @@ export class Web3storageService {
     const cid = await this.storage.put(files, {
       wrapWithDirectory,
     });
-    console.log(cid);
+
     return cid;
   }
 }

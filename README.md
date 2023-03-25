@@ -166,6 +166,98 @@ Returns: The IPFS URL for the uploaded contract URI.
 
 This is a controller for managing images and AI generated images for a NestJS application. It provides endpoints for uploading, getting, updating, and deleting images and AI generated images. It also provides endpoints for generating metadata URIs for images and AI generated images.
 
+ImagesController
+@Post() upload(@Headers() headers, @Req() req)
+Uploads images to the server and saves them to a storage service.
+
+Request Parameters:
+
+headers: An object containing HTTP request headers.
+req: The HTTP request object.
+Request Body:
+
+files: An array of files to be uploaded.
+userId: The ID of the user who is uploading the images. This is retrieved from the headers object.
+Response:
+
+Returns a JSON string containing information about the uploaded images.
+@Post("generateai") getAi(@Body() body)
+Generates an AI-generated image based on the prompt provided in the request body. The generated image is then uploaded to IPFS and saved to a storage service.
+
+Request Body:
+
+params: An object containing the prompt used to generate the image.
+headers: An object containing HTTP request headers.
+Response:
+
+Returns an object containing information about the generated image.
+@Get() getUserImageData(@Headers("userId") userId: any)
+Retrieves all of the images uploaded by a specific user.
+
+Request Headers:
+
+userId: The ID of the user whose images should be retrieved.
+Response:
+
+Returns an array of objects containing information about each image.
+@Get("ai") getUserAiGeneratedImageData(@Headers("userId") userId: any)
+Retrieves all of the AI-generated images uploaded by a specific user.
+
+Request Headers:
+
+userId: The ID of the user whose AI-generated images should be retrieved.
+Response:
+
+Returns an array of objects containing information about each AI-generated image.
+@Post("delete") deleteUserImages(@Body() body)
+Deletes specific images uploaded by a user.
+
+Request Body:
+
+params: An object containing an array of image file names to be deleted.
+headers: An object containing HTTP request headers.
+Response:
+
+Returns void.
+@Post("update") updateImageData(@Body() body)
+Updates the metadata for a specific image uploaded by a user.
+
+Request Body:
+
+params: An object containing the updated metadata for the image.
+headers: An object containing HTTP request headers.
+Response:
+
+Returns void.
+@Post("ai/update") updateAiGeneratedImageData(@Body() body)
+Updates the metadata for a specific AI-generated image uploaded by a user.
+
+Request Body:
+
+params: An object containing the updated metadata for the AI-generated image.
+headers: An object containing HTTP request headers.
+Response:
+
+Returns void.
+@Get("metadataURI") generateMetadataURI(@Headers("userId") userId: any)
+Generates a metadata URI for a user's uploaded images and uploads the metadata to IPFS.
+
+Request Headers:
+
+userId: The ID of the user whose image metadata should be generated.
+Response:
+
+Returns the URI of the uploaded metadata file.
+@Get("ai/metadataURI") generateMetadataURIAi(@Headers("userId") userId: any)
+Generates a metadata URI for a user's AI-generated images and uploads the metadata to IPFS.
+
+Request Headers:
+
+userId: The ID of the user whose AI-generated image metadata should be generated.
+Response:
+
+Returns the URI of the uploaded metadata file.
+
 <p align="center">
   <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo-small.svg" width="200" alt="Nest Logo" /></a>
 </p>

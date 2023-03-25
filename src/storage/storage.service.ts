@@ -10,23 +10,32 @@ export class StorageService {
   private bucket: string;
 
   constructor() {
+    const { projectId, client_email, private_key, mediaBucket } = StorageConfig;
+
     this.storage = new Storage({
-      projectId: StorageConfig.projectId,
+      projectId,
       credentials: {
-        client_email: StorageConfig.client_email,
-        private_key: StorageConfig.private_key,
+        client_email,
+        private_key,
       },
     });
-    this.bucket = StorageConfig.mediaBucket;
+
+    this.bucket = mediaBucket;
   }
 
   async saveJSON(path: string, jsonObject: any): Promise<string> {
     const file = this.storage.bucket(this.bucket).file(path);
-    await file.save(JSON.stringify(jsonObject));
+
+    try {
+      await file.save(JSON.stringify(jsonObject));
+    } catch (error) {
+      console.log(`Error saving JSON file: ${error}`);
+      throw error;
+    }
 
     const [signedUrl] = await file.getSignedUrl({
       action: "read",
-      expires: "03-09-2491",
+      expires: new Date().getTime() + 7 * 24 * 60 * 60 * 1000, // One week from now
     });
 
     return signedUrl;

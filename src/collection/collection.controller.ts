@@ -13,7 +13,9 @@ import { Web3storageService } from "./../web3storage/web3storage.service";
 
 @Controller("collection")
 export class CollectionController {
-  collection = {};
+  collectionSettings = {};
+  contractPath = "contracts.json";
+
   constructor(
     private readonly web3storageService: Web3storageService,
     private storageService: StorageService
@@ -23,13 +25,14 @@ export class CollectionController {
   getUserCollection(@Headers() headers): any {
     const userId = headers.userid;
 
-    if (!this.collection[userId]) {
-      this.collection[userId] = {
-        image: "",
+    if (!this.collectionSettings[userId]) {
+      this.collectionSettings[userId] = {
+        image:
+          "https://w3s.link/ipfs/bafybeib52qabkd5d3kcxtd3xfetjyquiytbd32wgaiw2dngsuhacdgc7nu/favicon.jpg",
       };
     }
 
-    return this.collection[userId];
+    return this.collectionSettings[userId];
   }
 
   @Post("image")
@@ -43,31 +46,65 @@ export class CollectionController {
       files[0].originalname
     }`;
 
-    if (!this.collection[userId]) {
-      this.collection[userId] = {
+    if (!this.collectionSettings[userId]) {
+      this.collectionSettings[userId] = {
         image: ipfsURL,
       };
     } else {
-      this.collection[userId].image = ipfsURL;
+      this.collectionSettings[userId].image = ipfsURL;
     }
     return ipfsURL;
   }
 
-  @Post("abi")
-  async saveAbi(@Body() body) {
-    const { deploymentAddress, abi } = body.params;
+  @Post("image/delete")
+  async deleteImage(@Req() req, @Headers() headers) {
+    const userId = headers.userid;
+    if (!this.collectionSettings[userId]) {
+      this.collectionSettings[userId] = {
+        image: "",
+      };
+    }
 
-    await this.storageService.saveJSON(`/abi/${deploymentAddress}.json`, abi);
+    this.collectionSettings[userId].image = "";
+    return;
   }
 
-  @Get("abi/:address")
-  async getAbi(@Param("address") address: string): Promise<any> {
+  @Post("save")
+  async saveContractDeployment(@Body() body) {
+    const { collection } = body.params;
+    let collections = [];
     try {
-      const abi = await this.storageService.getJSON(`abi/${address}.json`);
-      return abi;
-    } catch (e) {
-      return undefined;
+      collections = await this.storageService.getJSON(this.contractPath);
+    } catch (error) {
+      await this.storageService.saveJSON(this.contractPath, [collection]);
+      return;
     }
+
+    if (collections.find((c) => c.address === c.address).length > 0) {
+      const collectionsTemp = collections.filter(
+        (c) => c.address !== c.address
+      );
+      const updatedCollections = [...collectionsTemp, collection];
+      await this.storageService.saveJSON(this.contractPath, updatedCollections);
+      return;
+    }
+
+    const updatedCollections = [...collections, collection];
+
+    await this.storageService.saveJSON(this.contractPath, updatedCollections);
+    return;
+  }
+
+  @Get(":address")
+  async getAbi(@Param("address") address: string): Promise<any> {
+    const contracts = await this.storageService.getJSON(this.contractPath);
+    const contract = contracts.find((c) => c.address === address);
+
+    if (!contract) {
+      return null;
+    }
+
+    return contract;
   }
 
   @Post("contractURI")
